@@ -5,47 +5,54 @@
 
 import SHA256 from 'crypto-js/sha256'
 
-class Block {
-  public hash?: string
+type BlockParams = {
+  index: number
+  timestamp: string
+  data: string | Record<string, unknown>
+}
 
-  constructor(
-    private readonly index: number,
-    private readonly timestamp: string,
-    private readonly data: string | Record<string, unknown>,
-    public previousHash = '',
-  ) {}
-
-  public calculateHash(): string {
-    this.hash = SHA256(
-      this.index + this.previousHash + this.timestamp + JSON.stringify(this.data),
-    ).toString()
-    return this.hash
-  }
+type Block = BlockParams & {
+  previousHash: string
+  hash: string
 }
 
 class Blockchain {
   private readonly chain: Block[]
 
-  constructor(genesisBlock: Block) {
-    this.chain = [genesisBlock]
-    genesisBlock.calculateHash()
+  constructor(genesisBlockParams: BlockParams) {
+    this.chain = [
+      {
+        ...genesisBlockParams,
+        previousHash: '0',
+        hash: this.calculateHash(genesisBlockParams, '0'),
+      },
+    ]
   }
 
-  public addBlock(newBlock: Block): void {
+  public addBlock(newBlockParams: BlockParams): void {
     const previousHash = this.getLatestBlock().hash
     if (!previousHash) throw Error('previous hash is not defined')
-    newBlock.previousHash = previousHash
-    newBlock.calculateHash()
-    this.chain.push(newBlock)
+    this.chain.push({
+      ...newBlockParams,
+      previousHash,
+      hash: this.calculateHash(newBlockParams, previousHash),
+    })
   }
   private getLatestBlock(): Block {
     return this.chain[this.chain.length - 1]
   }
+  private calculateHash({ index, timestamp, data }: BlockParams, previousHash: string): string {
+    return SHA256(index + previousHash + timestamp + JSON.stringify(data)).toString()
+  }
 }
 
-const coin = new Blockchain(new Block(0, '2019/01/01', 'Genesis block', '0'))
-coin.addBlock(new Block(1, '2020/07/11', { amount: 10 }))
-coin.addBlock(new Block(2, '2020/07/12', { amount: 100 }))
-coin.addBlock(new Block(3, '2020/07/13', { amount: 1000 }))
+const coin = new Blockchain({
+  index: 0,
+  timestamp: '2019/01/01',
+  data: 'Genesis block',
+})
+coin.addBlock({ index: 1, timestamp: '2020/07/11', data: { amount: 10 } })
+coin.addBlock({ index: 2, timestamp: '2020/07/12', data: { amount: 100 } })
+coin.addBlock({ index: 3, timestamp: '2020/07/13', data: { amount: 1000 } })
 
 console.log(JSON.stringify(coin, null, 4))
