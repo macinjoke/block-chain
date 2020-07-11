@@ -2,7 +2,6 @@
   "compilerOptions": {
     "baseUrl": ".",
     "typeRoots": ["node_modules/@types", "typings"],
-    "types": ["jest", "snapshot-diff", "@welldone-software/why-did-you-render", "@types/webpack-env"], // @types/react-native/index.d.ts と typescript/lib/lib.dom.d.ts の型が競合したので個々で指定
     "sourceMap": true,
     "target": "es6",
     "module": "commonjs",
